@@ -1,6 +1,8 @@
 #--------------------------------------Modules------------------------------------------------
 import socket
+from SendMail import *
 from tkinter import *
+from random import randint
 import time,threading,json
 #--------------------------------------Tkinter------------------------------------------------
 root = Tk()
@@ -19,6 +21,29 @@ def loginAuth(ser):
 			ser.sendData("Ok")
 			return
 	ser.sendData("Not")
+
+def sendOTP(ser):
+	print("inside sendOTP")
+	global Email
+	ser.sendData("Ok")
+	msg = ser.recvData()
+	name,mail = msg.split("%")
+	print(msg)
+	otp = randint(10000,99999)
+	subj = f"Remote Login OTP [{otp}]"
+	body = "Dear " + name + ",\n Your One Time Password for Remote Login Tce Laboratory is " + str(otp) +"."
+	Email.sendMail(mail,subj,body)
+	ser.sendData(str(otp))
+	msg = ser.recvData()
+	reg,pwd = msg.split("%")
+	with open("cred.json", 'r') as f:
+		data = json.load(f)
+	ndata =  { 'name' : name,'id' : reg ,'pwd' : pwd ,'email':mail}
+	data[reg] = ndata
+	with open("cred.json", 'w') as f:
+		json.dump(data, f)
+	ser.sendData("Ok")
+
 
 class Socket():
 
@@ -48,6 +73,8 @@ class Socket():
 				Interface.send(msg)
 				if msg == "Login":
 					loginAuth(self)
+				elif msg == "OTP":
+					sendOTP(self)
 				elif msg == "Exit":
 					self.closeCon()
 				else:
@@ -98,7 +125,9 @@ def startCon():
 
 #--------------------------------------------------------------------------------------
 Interface = TkFrame(root)
-ser = Socket(6665,Interface)
+ser = Socket(6666,Interface)
+Email = Mail("remotelabtce2021@gmail.com","Ecetce2021")
+
 
 root.mainloop()
 #------------------------------------------END-------------------------------------------

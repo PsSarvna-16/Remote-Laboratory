@@ -44,6 +44,35 @@ def onlyDigit(dig):
 		return True
 	return False
 
+def validFrame(frame):
+	return True
+
+def getOTP(frame):
+	if validFrame(frame):
+		global cli,otp
+		
+		name = frame.name_S.get().strip()
+		email = frame.email_S.get().strip()
+
+		cli.sendData("OTP")
+		if cli.recvData() == "Ok":
+			cli.sendData(name+"%"+email)
+			otp = cli.recvData()
+			messagebox.showinfo(f"Done", "OTP Sent Succesfully.")
+		return False
+
+def createAccount(frame):
+	global cli,otp
+	reg = frame.reg_S.get().strip()
+	pwd = frame.pwd_S.get().strip()
+	userotp = frame.otp_S.get()
+	if userotp == frame.otp_S.get():
+		cli.sendData(reg+"%"+pwd)
+		if cli.recvData() == "Ok":
+			messagebox.showinfo(f"Done", "Account Created Succesfully.")
+			frame.bringLogin(frame)
+	else:
+		messagebox.showerror(f"Error", "OTP Not Matched")
 
 #--------------------------------------Student------------------------------------------------
 
@@ -177,7 +206,7 @@ class TkFrame:
 		self.otp_S = Entry(self.signUp_f,width = 15,background= "#EBEBEB",text= "OTP")
 		self.otp_S.place(x=175,y=255,width=80,height=20)		
 
-		self.sign_S = Button(self.signUp_f, text ="CREATE ACCOUNT",fg="black",bg="#32A6C3",font = ("Georgia",8)  ,command = lambda: closeSer())
+		self.sign_S = Button(self.signUp_f, text ="CREATE ACCOUNT",fg="black",bg="#32A6C3",font = ("Georgia",8)  ,command = lambda: createAccount(self))
 		self.sign_S.place(x=150,y=285,width=130,height=30)
 
 		self.back_S = Button(self.signUp_f, text ="Back" ,fg="black",bg="cyan",font = ("Georgia",8),command =lambda: self.bringLogin(root))
@@ -252,7 +281,7 @@ window.signUp(root)
 window.bringLogin(root)
 otp =""
 try:
-	cli = Socket('192.168.43.179',6665)
+	cli = Socket('192.168.43.179',6666)
 	cli.connectServer()
 except Exception as e:
 	messagebox.showerror(f"Warning", e)
