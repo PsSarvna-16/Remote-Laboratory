@@ -1,25 +1,37 @@
 #--------------------------------------Modules------------------------------------------------
 import socket
+import bcrypt
 from SendMail import *
 from tkinter import *
 from random import randint
 import time,threading,json
+
 #--------------------------------------Tkinter------------------------------------------------
+
 root = Tk()
 root.title("Remote-Lab-Server")
+root.iconbitmap(r'Image.ico')
+
 #--------------------------------------Socket------------------------------------------------
 
 def loginAuth(ser):
 	ser.sendData("Ok")
-	msg = ser.recvData()
-	msg = msg.split("%")
-	print(msg)
+	reg = ser.recvData()
+	ser.sendData("Ok")
+	pwd = bytes(ser.recvData(),'utf-8')
+	print(reg + " " + str(pwd))
+	Interface.send(f"Username : " + reg)
+	Interface.send(f"Password : " + len(pwd)*"*")
 	with open("cred.json", 'r') as f:
 		data = json.load(f)
-	if msg[0] in data:
-		if data[msg[0]]['pwd'] == msg[1]:
+	if reg in data:
+		if bcrypt.checkpw(pwd,bytes(data[reg]['pwd'],'utf-8')):
+			Interface.send(f"**** Login Sucessfull ****")
+			Interface.send(f"-------------------------------")
 			ser.sendData("Ok")
 			return
+	Interface.send(f"**** Login Failed ****")
+	Interface.send(f"-------------------------------")
 	ser.sendData("Not")
 
 def sendOTP(ser):
@@ -29,13 +41,13 @@ def sendOTP(ser):
 	msg = ser.recvData()
 	name,mail = msg.split("%")
 	print(msg)
-	otp = randint(10000,99999)
+	otp = randint(100000,999999)
 	subj = f"Remote Login OTP [{otp}]"
 	body = "Dear " + name + ",\n Your One Time Password for Remote Login Tce Laboratory is " + str(otp) +"."
 	Email.sendMail(mail,subj,body)
 	ser.sendData(str(otp))
-	msg = ser.recvData()
-	reg,pwd = msg.split("%")
+	reg = ser.recvData()
+	pwd = ser.recvData()
 	with open("cred.json", 'r') as f:
 		data = json.load(f)
 	ndata =  { 'name' : name,'id' : reg ,'pwd' : pwd ,'email':mail}
@@ -44,11 +56,12 @@ def sendOTP(ser):
 		json.dump(data, f)
 	ser.sendData("Ok")
 
-
 class Socket():
 
 	def __init__(self,port,Interface):
 		self.port = port
+		
+	def startCon(self):
 		self.soc = socket.socket()
 		Interface.send("Socket Created..")
 		print("Socket Created..")
@@ -57,8 +70,7 @@ class Socket():
 		self.soc.bind(('',self.port))
 		Interface.send(f"\nName : {self.name} \nIP   : {self.ip}\nPort : {self.port}")
 		print(f"\nName : {self.name} \nIP   : {self.ip}\nPort : {self.port}")
-		
-
+	
 	def acceptClients(self):
 		self.soc.listen(3)
 		while True:
@@ -70,8 +82,8 @@ class Socket():
 			self.recvData()
 			while True:
 				msg = self.client.recv(1024).decode()
-				Interface.send(msg)
 				if msg == "Login":
+					Interface.send(f"\n---------Login-----------")
 					loginAuth(self)
 				elif msg == "OTP":
 					sendOTP(self)
@@ -88,11 +100,17 @@ class Socket():
 	def recvData(self):
 		msg = self.client.recv(1024).decode()
 		print("rec  : "+ msg)
+		return msg	
+
+	def recvByte(self):
+		msg = self.client.recv(1024)
+		print("rec  : "+ str(msg))
 		return msg
 
 	def closeCon(self):
 		self.soc.close()
 		Interface.send("\nSocket Closed !!")
+
 #-------------------------------------TkFrame----------------------------------------------------
 
 class TkFrame:
@@ -117,17 +135,19 @@ class TkFrame:
 
 def startCon():
 	global ser
+	try:
+		ser.closeCon()
+	except:
+		pass
+	ser.startCon()
 	thread = threading.Thread(target = ser.acceptClients )
 	thread.start()
-#---------------------------------------Login-----------------------------------------
-
-
 
 #--------------------------------------------------------------------------------------
+
 Interface = TkFrame(root)
 ser = Socket(6666,Interface)
 Email = Mail("remotelabtce2021@gmail.com","Ecetce2021")
-
 
 root.mainloop()
 #------------------------------------------END-------------------------------------------

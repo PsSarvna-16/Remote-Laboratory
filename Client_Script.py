@@ -1,8 +1,11 @@
 #--------------------------------------Modules------------------------------------------------
+
 import socket
 import pickle
+import bcrypt
 from tkinter import *
 from tkinter import messagebox
+
 #--------------------------------------Tkinter------------------------------------------------
 
 root = Tk()
@@ -20,12 +23,13 @@ def authLogin(frame):
 	msg = "Login"
 	cli.sendData(msg)
 	if(cli.recvData()) == "Ok":
-		msg = user + "%" + pwd
-		cli.sendData(msg)
+		cli.sendData(user)
 		if(cli.recvData()) == "Ok":
-			messagebox.showinfo(f"Succes", "Logged-In")
-			return 1
-	messagebox.showwarning(f"Warning", "Credentials Not MAtched")
+			cli.sendData(pwd)
+			if(cli.recvData()) == "Ok":
+				messagebox.showinfo(f"Succes", "Logged-In")
+				return 1
+	messagebox.showwarning(f"Warning", "Credentials Not Matched")
 
 def closeSer():
 	global cli
@@ -45,6 +49,12 @@ def onlyDigit(dig):
 	return False
 
 def validFrame(frame):
+	if not Student.validReg(frame.reg_S.get()):
+		messagebox.showwarning(f"Warning", "Enter Valid Register number.")
+	elif not Student.validEmail(frame.email_S.get()):
+		messagebox.showwarning(f"Warning", "Enter Valid E-Mail Id.")
+	elif (frame.pwd_S.get() != frame.cpwd_S.get()):
+		messagebox.showwarning(f"Warning", "Password not Matched.")
 	return True
 
 def getOTP(frame):
@@ -58,19 +68,23 @@ def getOTP(frame):
 		if cli.recvData() == "Ok":
 			cli.sendData(name+"%"+email)
 			otp = cli.recvData()
+			frame.sign_S.config(state = NORMAL)
 			messagebox.showinfo(f"Done", "OTP Sent Succesfully.")
 		return False
 
 def createAccount(frame):
 	global cli,otp
+	salt = bcrypt.gensalt()
 	reg = frame.reg_S.get().strip()
-	pwd = frame.pwd_S.get().strip()
+	pwd = bytes(frame.pwd_S.get().strip(),'utf-8')
+	pwd = bcrypt.hashpw(pwd,salt)
 	userotp = frame.otp_S.get()
 	if userotp == frame.otp_S.get():
-		cli.sendData(reg+"%"+pwd)
+		cli.sendData(reg)
+		cli.sendByte(pwd)
 		if cli.recvData() == "Ok":
 			messagebox.showinfo(f"Done", "Account Created Succesfully.")
-			frame.bringLogin(frame)
+			frame.bringLogin(root)
 	else:
 		messagebox.showerror(f"Error", "OTP Not Matched")
 
@@ -86,7 +100,7 @@ class Student():
 
 	@staticmethod
 	def validReg(reg):
-		if re.search("\d{2}[a-zA-Z][\d]{3}",reg):
+		if re.search("\d{2}[a-zA-Z][\d]{3}$",reg):
 			return True
 		return False
 
@@ -114,10 +128,14 @@ class Socket():
 		self.sendData("Ok")
 		return
 
-
 	def sendData(self,msg):
 		print("sent : " + msg)
 		self.con.send(bytes(msg,'utf-8'))
+		return
+	
+	def sendByte(self,msg):
+		print("sent : " + str(msg))
+		self.con.send(msg)
 		return
 	
 	def recvData(self):
@@ -206,7 +224,7 @@ class TkFrame:
 		self.otp_S = Entry(self.signUp_f,width = 15,background= "#EBEBEB",text= "OTP")
 		self.otp_S.place(x=175,y=255,width=80,height=20)		
 
-		self.sign_S = Button(self.signUp_f, text ="CREATE ACCOUNT",fg="black",bg="#32A6C3",font = ("Georgia",8)  ,command = lambda: createAccount(self))
+		self.sign_S = Button(self.signUp_f, text ="CREATE ACCOUNT",fg="black",bg="#32A6C3",state = DISABLED,font = ("Georgia",8)  ,command = lambda: createAccount(self))
 		self.sign_S.place(x=150,y=285,width=130,height=30)
 
 		self.back_S = Button(self.signUp_f, text ="Back" ,fg="black",bg="cyan",font = ("Georgia",8),command =lambda: self.bringLogin(root))
@@ -251,21 +269,29 @@ class TkFrame:
 			return True
 		self.email_S.config(highlightbackground = "red", highlightcolor= "red")
 		return True
-	
+
 	def validPwd(self,pwd):
-		if len(pwd)>5:
+		cpwd = self.cpwd_S.get()
+		print(pwd+" "+cpwd)
+		if cpwd == pwd and (len(cpwd)>5 and len(pwd)>5):
+			self.cpwd_S.config(highlightbackground = "green", highlightcolor= "green")
 			self.pwd_S.config(highlightbackground = "green", highlightcolor= "green")
-			return True
-		self.pwd_S.config(highlightbackground = "red", highlightcolor= "red")
+		else:
+			self.cpwd_S.config(highlightbackground = "red", highlightcolor= "red")
+			self.pwd_S.config(highlightbackground = "red", highlightcolor= "red")
 		return True
 
 	def validCpwd(self,cpwd):
-		if cpwd == self.pwd_S.get():
+		pwd =self.pwd_S.get()
+		print(pwd+" "+cpwd)
+		if cpwd == pwd and (len(cpwd)>5 and len(pwd)>5):
 			self.cpwd_S.config(highlightbackground = "green", highlightcolor= "green")
-			return True
-		self.cpwd_S.config(highlightbackground = "red", highlightcolor= "red")
+			self.pwd_S.config(highlightbackground = "green", highlightcolor= "green")
+		else:
+			self.cpwd_S.config(highlightbackground = "red", highlightcolor= "red")
+			self.pwd_S.config(highlightbackground = "red", highlightcolor= "red")
 		return True
-	
+
 	def validName(self,name):
 		if len(name) >= 3:
 			self.name_S.config(highlightbackground = "green", highlightcolor= "green")
