@@ -10,10 +10,10 @@ class Mail:
 		self.EMAIL_ADDR = mail
 		self.EMAIL_PWD = pwd
 
-	def sendMail(self,mail,subj,body):
+	def sendMail(self,mail,name,subj,body):
 		msg = EmailMessage()
 		msg['Subject'] = subj
-		msg['From'] = self.EMAIL_ADDR
+		msg['From'] = name
 		msg['To'] = mail
 		msg.set_content(body)
 		try:
@@ -24,6 +24,7 @@ class Mail:
 				return 1
 		except Exception as e:
 			return e
+
 
 
 """

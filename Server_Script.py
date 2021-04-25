@@ -43,8 +43,8 @@ def sendOTP(ser):
 	print(msg)
 	otp = randint(100000,999999)
 	subj = f"Remote Login OTP [{otp}]"
-	body = "Dear " + name + ",\n Your One Time Password for Remote Login Tce Laboratory is " + str(otp) +"."
-	Email.sendMail(mail,subj,body)
+	body = "Hi " + name + ",\n\n\tYour One Time Password for Remote Login Laboratory is " + str(otp) +"."
+	Email.sendMail(mail,"Thiagarajar College of Engineering (TCE)",subj,body)
 	ser.sendData(str(otp))
 	reg = ser.recvData()
 	pwd = ser.recvData()
@@ -53,7 +53,7 @@ def sendOTP(ser):
 	ndata =  { 'name' : name,'id' : reg ,'pwd' : pwd ,'email':mail}
 	data[reg] = ndata
 	with open("cred.json", 'w') as f:
-		json.dump(data, f)
+		json.dump(data, f,indent=2)
 	ser.sendData("Ok")
 
 class Socket():
