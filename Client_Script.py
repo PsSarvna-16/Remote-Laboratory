@@ -110,7 +110,7 @@ class Student():
 		return False
 
 	def validEmail(email):
-		if re.search("[a-zA-z]{5,50}@student.tce.edu$",email):
+		if re.search("[a-zA-z]{3,50}@student.tce.edu$",email):
 			return True
 		return False
 
@@ -277,7 +277,6 @@ class TkFrame:
 
 	def validPwd(self,pwd):
 		cpwd = self.cpwd_S.get()
-		print(pwd+" "+cpwd)
 		if cpwd == pwd and (len(cpwd)>5 and len(pwd)>5):
 			self.cpwd_S.config(highlightbackground = "green", highlightcolor= "green")
 			self.pwd_S.config(highlightbackground = "green", highlightcolor= "green")
@@ -288,7 +287,6 @@ class TkFrame:
 
 	def validCpwd(self,cpwd):
 		pwd =self.pwd_S.get()
-		print(pwd+" "+cpwd)
 		if cpwd == pwd and (len(cpwd)>5 and len(pwd)>5):
 			self.cpwd_S.config(highlightbackground = "green", highlightcolor= "green")
 			self.pwd_S.config(highlightbackground = "green", highlightcolor= "green")
