@@ -31,8 +31,8 @@ def authLogin(frame,root):
 			cli.sendByte(rsa.encrypt(pwd.encode(),public_l))
 			if(cli.recvData()) == "Ok":
 				messagebox.showinfo(f"Succes", "Logged-In")
-				root.withdraw()
-				os.system('python Client.py')
+				#root.withdraw()
+				#os.system('python Client.py')
 				return 1
 	messagebox.showwarning(f"Warning", "Credentials Not Matched")
 
