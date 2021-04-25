@@ -37,17 +37,19 @@ def loginAuth(ser):
 	ser.sendData("Not")
 
 def sendOTP(ser):
-	print("inside sendOTP")
 	global Email
 	ser.sendData("Ok")
 	msg = ser.recvData()
 	name,mail = msg.split("%")
-	print(msg)
+	Interface.send(f"name : " + name)
+	Interface.send(f"mail : " + mail)
 	otp = randint(100000,999999)
 	subj = f"Remote Login OTP [{otp}]"
 	body = "Hi " + name + ",\n\n\tYour One Time Password for Remote Login Laboratory is " + str(otp) +"."
-	Email.sendMail(mail,"Thiagarajar College of Engineering (TCE)",subj,body)
+	Email.sendMail(mail,"Remote Laboratory",subj,body)
 	ser.sendData(str(otp))
+	Interface.send(f"OTP sent Succesfully")
+	Interface.send(f"\n*******************")
 	reg = ser.recvData()
 	pwd = ser.recvData()
 	with open("cred.json", 'r') as f:
@@ -57,10 +59,13 @@ def sendOTP(ser):
 	with open("cred.json", 'w') as f:
 		json.dump(data, f, indent=2)
 	ser.sendData("Ok")
+	Interface.send(f"\nUser Account Created : {reg}")
+	Interface.send(f"\n****Authentication Sucessfull****")
+	Interface.send(f"-------------------------------")
 
 class Socket():
 
-	def __init__(self,port,Interface):
+	def __init__(self,port):
 		self.port = port
 		
 	def startCon(self):
@@ -75,24 +80,27 @@ class Socket():
 	
 	def acceptClients(self):
 		self.soc.listen(3)
-		while True:
-			Interface.send("\nWaiting For Clients..")
-			print("\nWaiting For Clients..")
-			self.client, self.addr = self.soc.accept()
-			Interface.send(f"\nConnected with {self.addr}")
-			print(f"\nConnected with {self.addr}")
-			self.recvData()
-			while True:
+		Interface.send("\nWaiting For Clients..")
+		print("\nWaiting For Clients..")
+		self.client, self.addr = self.soc.accept()
+		Interface.send(f"\nConnected with {self.addr}")
+		print(f"\nConnected with {self.addr}")
+		self.recvData()
+		while self.client:
+			try:
 				msg = self.client.recv(1024).decode()
 				if msg == "Login":
 					Interface.send(f"\n---------Login-----------")
 					loginAuth(self)
 				elif msg == "OTP":
+					Interface.send(f"\n----------Send OTP-------------")
 					sendOTP(self)
 				elif msg == "Exit":
 					self.closeCon()
 				else:
 					Interface.send(msg)
+			except Exception as e:
+				print(e)
 
 	def sendData(self,msg):
 		print("sent : " + msg)
@@ -110,9 +118,15 @@ class Socket():
 		return msg
 
 	def closeCon(self):
-		self.soc.close()
-		Interface.send("\nSocket Closed !!")
-
+		try:
+			self.client.close()
+		except:
+			pass
+		try:
+			self.soc.close()
+			Interface.send("\nSocket Closed !!")
+		except:
+			Interface.send("\nError !!")
 #-------------------------------------TkFrame----------------------------------------------------
 
 class TkFrame:
@@ -141,6 +155,8 @@ def startCon():
 		ser.closeCon()
 	except:
 		pass
+
+	ser = Socket(port)
 	ser.startCon()
 	thread = threading.Thread(target = ser.acceptClients )
 	thread.start()
@@ -148,7 +164,13 @@ def startCon():
 #--------------------------------------------------------------------------------------
 
 Interface = TkFrame(root)
-ser = Socket(6666,Interface)
+port= 5050
+
+try:
+	ser = Socket(port)
+except:
+	pass
+
 Email = Mail("remotelabtce2021@gmail.com","Ecetce2021")
 
 root.mainloop()

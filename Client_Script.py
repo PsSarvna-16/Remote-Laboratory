@@ -4,12 +4,16 @@ import socket
 import pickle
 import bcrypt
 import rsa,os
+import pickle
 from tkinter import *
 from tkinter import messagebox
 
 #--------------------------------------Tkinter------------------------------------------------
 
 public_l = rsa.key.PublicKey(72197395526160633030554118496234289569625855085660915915118801205090674214579, 65537)
+
+publRem = rsa.key.PublicKey(76037163286527079097001769718316251637926036926725617216612747235251018583779, 65537)
+privRem = rsa.key.PrivateKey(76037163286527079097001769718316251637926036926725617216612747235251018583779, 65537, 26487761689296324454652339940326228292130484211569005500103807739194971616673, 57488641403364535190096194188479472043961, 1322646725168164917637242845972521339)
 
 root = Tk()
 root.title("Remote-Laboratory")
@@ -31,6 +35,11 @@ def authLogin(frame,root):
 			cli.sendByte(rsa.encrypt(pwd.encode(),public_l))
 			if(cli.recvData()) == "Ok":
 				messagebox.showinfo(f"Succes", "Logged-In")
+				if frame.check.get():
+					pwd =rsa.encrypt(pwd.encode(),publRem)
+					data = {"id" : user , "pwd" : pwd}
+					with open('data','wb') as f:
+						pickle.dump(data,f)
 				#root.withdraw()
 				#os.system('python Client.py')
 				return 1
@@ -157,6 +166,7 @@ class TkFrame:
 		pass
 
 	def Login(self,root):
+		self.check = IntVar() 
 
 		self.Login_f = Frame(root,width = 430,height=350,bg= "#0A2472")
 		self.Login_f.place(x=0,y=0)
@@ -167,12 +177,24 @@ class TkFrame:
 		self.user_L.place(x=150,y=100,width=150,height=25)
 		self.user_L.insert(END,"Username")
 
-		self.pwd_L = Entry(self.Login_f,width = 15,fg = "#0B0B0A",show= "*",background= "#CEEAF3")
+		self.pwd_L = Entry(self.Login_f,width = 15,fg = "#0B0B0A",show="*",background= "#CEEAF3")
 		self.pwd_L.place(x=150,y=140,width=150,height=25)
 		self.pwd_L.insert(END,"Password")
+		
+		try:
+			with open('data', 'rb') as f:
+				global privRem
+				data = pickle.load(f)
+				self.user_L.delete(0,END)
+				self.pwd_L.delete(0,END)
+				self.user_L.insert(END,data['id'])
+				self.pwd_L.insert(END,rsa.decrypt(data['pwd'], privRem).decode())
+		except Exception as e:
+			pass
 
-		self.rem_L = Checkbutton(self.Login_f,text= "Remember Me",fg= "white",bg= "#0A2472")
-		self.rem_L.place(x=170,y=180)
+		self.rem = Checkbutton(self.Login_f,text= "Remember",onvalue = 1, offvalue=0,variable = self.check,fg= "cyan",bg= "#0A2472")
+		self.rem.place(x=170,y=180)
+		self.check.set(True)
 
 		self.login_L = Button(self.Login_f, text ="LOGIN",fg="black",bg="#32A6C3",font = ("Georgia",16) ,command = lambda: authLogin(self,root))
 		self.login_L.place(x=150,y=220,width=150,height=30)
@@ -310,7 +332,7 @@ window.signUp(root)
 window.bringLogin(root)
 otp =""
 try:
-	cli = Socket('192.168.43.179',6666)
+	cli = Socket('192.168.43.179',5050)
 	cli.connectServer()
 except Exception as e:
 	messagebox.showerror(f"Warning", e)

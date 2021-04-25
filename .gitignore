@@ -1,2 +1,5 @@
 *.json
 *.pyc
+data
+cred.json
+cred.json
