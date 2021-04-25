@@ -1,12 +1,15 @@
 #--------------------------------------Modules------------------------------------------------
 import socket
 import bcrypt
+import rsa
 from SendMail import *
 from tkinter import *
 from random import randint
 import time,threading,json
 
 #--------------------------------------Tkinter------------------------------------------------
+
+private = rsa.key.PrivateKey(72197395526160633030554118496234289569625855085660915915118801205090674214579, 65537, 70026086699359549555521355819333030910193842644411380649853020745670061704641, 63263233427758951304101718942519092713347, 1141222027618991512670775157258845457)
 
 root = Tk()
 root.title("Remote-Lab-Server")
@@ -18,8 +21,7 @@ def loginAuth(ser):
 	ser.sendData("Ok")
 	reg = ser.recvData()
 	ser.sendData("Ok")
-	pwd = bytes(ser.recvData(),'utf-8')
-	print(reg + " " + str(pwd))
+	pwd =bytes(rsa.decrypt(ser.recvByte(), private).decode(),'utf-8')
 	Interface.send(f"Username : " + reg)
 	Interface.send(f"Password : " + len(pwd)*"*")
 	with open("cred.json", 'r') as f:
@@ -53,7 +55,7 @@ def sendOTP(ser):
 	ndata =  { 'name' : name,'id' : reg ,'pwd' : pwd ,'email':mail}
 	data[reg] = ndata
 	with open("cred.json", 'w') as f:
-		json.dump(data, f,indent=2)
+		json.dump(data, f, indent=2)
 	ser.sendData("Ok")
 
 class Socket():

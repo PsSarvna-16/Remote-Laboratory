@@ -3,10 +3,13 @@
 import socket
 import pickle
 import bcrypt
+import rsa,os
 from tkinter import *
 from tkinter import messagebox
 
 #--------------------------------------Tkinter------------------------------------------------
+
+public_l = rsa.key.PublicKey(72197395526160633030554118496234289569625855085660915915118801205090674214579, 65537)
 
 root = Tk()
 root.title("Remote-Laboratory")
@@ -15,7 +18,7 @@ root.iconbitmap(r'Image.ico')
 
 #--------------------------------------functions------------------------------------------------
 
-def authLogin(frame):
+def authLogin(frame,root):
 	global cli
 	user = frame.user_L.get().strip()
 	pwd = frame.pwd_L.get().strip()
@@ -25,9 +28,11 @@ def authLogin(frame):
 	if(cli.recvData()) == "Ok":
 		cli.sendData(user)
 		if(cli.recvData()) == "Ok":
-			cli.sendData(pwd)
+			cli.sendByte(rsa.encrypt(pwd.encode(),public_l))
 			if(cli.recvData()) == "Ok":
 				messagebox.showinfo(f"Succes", "Logged-In")
+				root.withdraw()
+				os.system('python Client.py')
 				return 1
 	messagebox.showwarning(f"Warning", "Credentials Not Matched")
 
@@ -105,7 +110,7 @@ class Student():
 		return False
 
 	def validEmail(email):
-		if re.search("[a-zA-z]*@student.tce.edu$",email):
+		if re.search("[a-zA-z]{5,50}@student.tce.edu$",email):
 			return True
 		return False
 
@@ -169,7 +174,7 @@ class TkFrame:
 		self.rem_L = Checkbutton(self.Login_f,text= "Remember Me",fg= "white",bg= "#0A2472")
 		self.rem_L.place(x=170,y=180)
 
-		self.login_L = Button(self.Login_f, text ="LOGIN",fg="black",bg="#32A6C3",font = ("Georgia",16) ,command = lambda: authLogin(self))
+		self.login_L = Button(self.Login_f, text ="LOGIN",fg="black",bg="#32A6C3",font = ("Georgia",16) ,command = lambda: authLogin(self,root))
 		self.login_L.place(x=150,y=220,width=150,height=30)
 
 		self.sign_L = Button(self.Login_f, text ="SIGN UP" ,fg="white",bg="#0A2472",font = ("Georgia",10),command =lambda: self.bringSignUp(root))
