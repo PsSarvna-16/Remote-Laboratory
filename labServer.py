@@ -1,84 +1,15 @@
 #--------------------------------------Modules------------------------------------------------
-import socket
-import bcrypt
-import rsa
-from SendMail import *
+import socket,time
+from pyfirmata import Arduino,util, STRING_DATA
 from tkinter import *
 from random import randint
 import time,threading,json
 
 #--------------------------------------Tkinter------------------------------------------------
-
-private = rsa.key.PrivateKey(72197395526160633030554118496234289569625855085660915915118801205090674214579, 65537, 70026086699359549555521355819333030910193842644411380649853020745670061704641, 63263233427758951304101718942519092713347, 1141222027618991512670775157258845457)
-
 root = Tk()
 root.title("Remote-Lab-Server")
 root.iconbitmap(r'Image.ico')
-
 #--------------------------------------Socket------------------------------------------------
-
-def connect(frame):
-	stat = frame.conn_S.cget('text')
-	print(stat)
-	global cli
-	if stat == "Connect":
-		cli.sendData("ConnectArduino")
-		frame.conn_S.config(text = "DisConnect")
-	else:
-		cli.sendData("DisConnectArduino")
-		frame.conn_S.config(text = "Connect")
-	return
-
-def writeServo(frame):
-	val = frame.otp_S.get()
-	cli.sendData("S" + val)
-	return
-
-def loginAuth(ser):
-	ser.sendData("Ok")
-	reg = ser.recvData()
-	ser.sendData("Ok")
-	pwd =bytes(rsa.decrypt(ser.recvByte(), private).decode(),'utf-8')
-	Interface.send(f"Username : " + reg)
-	Interface.send(f"Password : " + len(pwd)*"*")
-	with open("cred.json", 'r') as f:
-		data = json.load(f)
-	if reg in data:
-		if bcrypt.checkpw(pwd,bytes(data[reg]['pwd'],'utf-8')):
-			Interface.send(f"**** Login Sucessfull ****")
-			Interface.send(f"-------------------------------")
-			ser.sendData("Ok")
-			return
-	Interface.send(f"**** Login Failed ****")
-	Interface.send(f"-------------------------------")
-	ser.sendData("Not")
-
-def sendOTP(ser):
-	global Email
-	ser.sendData("Ok")
-	msg = ser.recvData()
-	name,mail = msg.split("%")
-	Interface.send(f"name : " + name)
-	Interface.send(f"mail : " + mail)
-	otp = randint(100000,999999)
-	subj = f"Remote Login OTP [{otp}]"
-	body = "Hi " + name + ",\n\n\tYour One Time Password for Remote Login Laboratory is " + str(otp) +"."
-	Email.sendMail(mail,"Remote Laboratory",subj,body)
-	ser.sendData(str(otp))
-	Interface.send(f"OTP sent Succesfully")
-	Interface.send(f"\n*******************")
-	reg = ser.recvData()
-	pwd = ser.recvData()
-	with open("cred.json", 'r') as f:
-		data = json.load(f)
-	ndata =  { 'name' : name,'id' : reg ,'pwd' : pwd ,'email':mail}
-	data[reg] = ndata
-	with open("cred.json", 'w') as f:
-		json.dump(data, f, indent=2)
-	ser.sendData("Ok")
-	Interface.send(f"\nUser Account Created : {reg}")
-	Interface.send(f"\n****Authentication Sucessfull****")
-	Interface.send(f"-------------------------------")
 
 class Ardino:
 
@@ -153,13 +84,8 @@ class Socket:
 					ard.servo(int(msg[1:]))
 				elif msg == "Back":
 					ard.disconnectArd()
-				elif msg == "Login":
-					Interface.send(f"\n---------Login-----------")
-					loginAuth(self)
-				elif msg == "OTP":
-					Interface.send(f"\n----------Send OTP-------------")
-					sendOTP(self)
 				elif msg == "Exit":
+					ard.disconnectArd()
 					self.closeCon()
 					break
 				else:
@@ -203,10 +129,9 @@ class TkFrame:
 	
 	def __init__(self,root):
 		Main = Frame(root)
-
+		global ser
 		self.text = Text(Main ,width = 40,height = 25,state = DISABLED,background= "#EBEBEB",xscrollcommand = True)
 		self.text.grid(row=1,columnspan=2)
-		global ser
 		self.start_b = Button(Main,text= "Start", command = lambda: startCon())
 		self.start_b.grid(row=0,column=0)
 		self.terminate_b = Button(Main,text = "Terminate",command = lambda:  ser.closeCon())
@@ -230,19 +155,16 @@ def startCon():
 	ser.startCon()
 	thread = threading.Thread(target = ser.acceptClients )
 	thread.start()
-
 #--------------------------------------------------------------------------------------
 
 Interface = TkFrame(root)
 ard = Ardino()
-port= 5002
+port= 5000
 
 try:
 	ser = Socket(port)
 except:
 	pass
-
-Email = Mail("remotelabtce2021@gmail.com","Ecetce2021")
 
 root.mainloop()
 #------------------------------------------END-------------------------------------------

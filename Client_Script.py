@@ -40,8 +40,7 @@ def authLogin(frame,root):
 					data = {"id" : user , "pwd" : pwd}
 					with open('data','wb') as f:
 						pickle.dump(data,f)
-				#root.withdraw()
-				#os.system('python Client.py')
+				window.bringExperiments(root)
 				return 1
 	messagebox.showwarning(f"Warning", "Credentials Not Matched")
 
@@ -70,6 +69,13 @@ def validFrame(frame):
 	elif (frame.pwd_S.get() != frame.cpwd_S.get()):
 		messagebox.showwarning(f"Warning", "Password not Matched.")
 	return True
+
+def onlyDigitAng(dig):
+	if re.search("[0-9]$",dig) and len(str(dig)) <= 3:
+		return True
+	elif dig == "":
+		return True
+	return False
 
 def getOTP(frame):
 	if validFrame(frame):
@@ -272,7 +278,62 @@ class TkFrame:
 		self.email_S.config(validate = "key",validatecommand = (email,'%P'))
 		self.reg_S.config(validate = "key",validatecommand = (reg,'%P'))
 		self.otp_S.config(validate = "key",validatecommand = (digit,'%P'))
+	
+	def experiments(self,root):
+
+		root.geometry("430x350")
+		self.exp_f = Frame(root,width = 430,height=350,bg= "#0A2472")
+		self.exp_f.place(x=0,y=0)
+
+		Label(self.exp_f,text= "experiments",fg= "white",bg= "#0A2472",font = ("Engravers MT",16)).place(x=120,y=30,width=200,height=40)
+
+		self.ser_b = Button(self.exp_f, text ="SERVO MOTOR CONTROL",fg="black",bg="#32A6C3",font = ("Georgia",8) ,command = lambda: self.bringServo(root))
+		self.ser_b.place(x=150,y=100,width=150,height=30)
+
+		self.exit_L = Button(self.exp_f, text ="EXIT",fg="black",bg="#FAA34C",font = ("Georgia",8)  ,command = lambda: closeSer())
+		self.exit_L.place(x=35,y=300,width=100,height=30)
+
+		self.exp_f.place_forget()
+
+	def servoMotor(self,root):
 		
+		root.geometry("430x350")
+		self.ser_f = Frame(root,width = 430,height=350,bg= "#0A2472")
+		self.ser_f.place(x=0,y=0)
+
+		Label(self.ser_f,text= "SERVO MOTOR",fg= "white",bg= "#0A2472",font = ("Engravers MT",16)).place(x=115,y=15,width=200,height=40)
+		
+		self.conn_S = Button(self.ser_f, text ="Connect" ,fg="black",bg="cyan",font = ("Georgia",12),command =lambda: connect(self))
+		self.conn_S.place(x=175,y=100,width=80,height=25)
+
+		self.slider = Scale(self.ser_f,from_ = 0, to = 180,highlightbackground = "#0A2472",bg= "#0A2472",fg="white",orient = HORIZONTAL)
+		self.slider.place(x=120,y=150,width = 120)
+
+		self.otp_S = Entry(self.ser_f,width = 3,background= "#EBEBEB",text= "OTP")
+		self.otp_S.place(x=260,y=170,width=30,height=20)		
+
+		digit = root.register(onlyDigitAng)
+
+		self.otp_S.config(validate = "key",validatecommand = (digit,'%P'))
+
+		self.upd_S = Button(self.ser_f, text ="Update" ,fg="black",bg="cyan",font = ("Georgia",12),command =lambda: writeServo(self))
+		self.upd_S.place(x=175,y=220,width=80,height=25)
+
+		self.back_S = Button(self.ser_f, text ="Back" ,fg="black",bg="#FAA34C",font = ("Georgia",8),command =lambda: self.bringExperiments(root))
+		self.back_S.place(x=50,y=300,width=65,height=27)
+
+		self.ser_f.place_forget()
+
+	def bringExperiments(self,root):
+		self.ser_f.place_forget()
+		root.geometry("430x350")
+		self.exp_f.place(x=0,y=0)	
+
+	def bringServo(self,root):
+		self.exp_f.place_forget()
+		root.geometry("430x350")
+		self.ser_f.place(x=0,y=0)
+
 	def bringLogin(self,root):
 		self.signUp_f.place_forget()
 		root.geometry("430x350")
@@ -329,10 +390,13 @@ class TkFrame:
 window = TkFrame(root)
 window.Login(root)
 window.signUp(root)
+window.experiments(root)
+window.servoMotor(root)
 window.bringLogin(root)
+
 otp =""
 try:
-	cli = Socket('192.168.43.179',5050)
+	cli = Socket('192.168.43.180',5002)
 	cli.connectServer()
 except Exception as e:
 	messagebox.showerror(f"Warning", e)
