@@ -2,6 +2,7 @@
 import socket
 import bcrypt
 import rsa
+from pyfirmata import Arduino,util, STRING_DATA
 from SendMail import *
 from tkinter import *
 from random import randint
@@ -17,22 +18,6 @@ root.iconbitmap(r'Image.ico')
 
 #--------------------------------------Socket------------------------------------------------
 
-def connect(frame):
-	stat = frame.conn_S.cget('text')
-	print(stat)
-	global cli
-	if stat == "Connect":
-		cli.sendData("ConnectArduino")
-		frame.conn_S.config(text = "DisConnect")
-	else:
-		cli.sendData("DisConnectArduino")
-		frame.conn_S.config(text = "Connect")
-	return
-
-def writeServo(frame):
-	val = frame.otp_S.get()
-	cli.sendData("S" + val)
-	return
 
 def loginAuth(ser):
 	ser.sendData("Ok")
@@ -235,7 +220,7 @@ def startCon():
 
 Interface = TkFrame(root)
 ard = Ardino()
-port= 5002
+port= 5000
 
 try:
 	ser = Socket(port)

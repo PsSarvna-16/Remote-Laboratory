@@ -21,6 +21,28 @@ root.geometry("430x400")
 root.iconbitmap(r'Image.ico')
 
 #--------------------------------------functions------------------------------------------------
+def connect(frame):
+	stat = frame.conn_S.cget('text')
+	print(stat)
+	global cli
+	if stat == "Connect":
+		cli.sendData("ConnectArduino")
+		frame.conn_S.config(text = "DisConnect")
+		frame.slider.config(state = NORMAL)
+		frame.ang_S.config(state = NORMAL)
+		frame.upd_S.config(state = NORMAL)
+	else:
+		cli.sendData("DisConnectArduino")
+		frame.conn_S.config(text = "Connect")
+		frame.slider.config(state = DISABLED)
+		frame.ang_S.config(state = DISABLED)
+		frame.upd_S.config(state = DISABLED)
+	return
+
+def writeServo(frame):
+	val = frame.ang_S.get()
+	cli.sendData("S" + val)
+	return
 
 def authLogin(frame,root):
 	global cli
@@ -55,7 +77,7 @@ def closeSer():
 			exit()
 
 def onlyDigit(dig):
-	if re.search("[0-9]$",dig) and len(str(dig)) <= 6:
+	if re.search("[0-9]$",dig) and len(str(dig)) <= 6 and int(dig) <=180 and int(dig) >=0:
 		return True
 	elif dig == "":
 		return True
@@ -306,17 +328,17 @@ class TkFrame:
 		self.conn_S = Button(self.ser_f, text ="Connect" ,fg="black",bg="cyan",font = ("Georgia",12),command =lambda: connect(self))
 		self.conn_S.place(x=175,y=100,width=80,height=25)
 
-		self.slider = Scale(self.ser_f,from_ = 0, to = 180,highlightbackground = "#0A2472",bg= "#0A2472",fg="white",orient = HORIZONTAL)
+		self.slider = Scale(self.ser_f,state = DISABLED,from_ = 0, to = 180,highlightbackground = "#0A2472",bg= "#0A2472",fg="white",orient = HORIZONTAL)
 		self.slider.place(x=120,y=150,width = 120)
 
-		self.otp_S = Entry(self.ser_f,width = 3,background= "#EBEBEB",text= "OTP")
-		self.otp_S.place(x=260,y=170,width=30,height=20)		
+		self.ang_S = Entry(self.ser_f,state = DISABLED,width = 3,background= "#EBEBEB",text= "Angle")
+		self.ang_S.place(x=260,y=170,width=30,height=20)		
 
 		digit = root.register(onlyDigitAng)
 
-		self.otp_S.config(validate = "key",validatecommand = (digit,'%P'))
+		self.ang_S.config(validate = "key",validatecommand = (digit,'%P'))
 
-		self.upd_S = Button(self.ser_f, text ="Update" ,fg="black",bg="cyan",font = ("Georgia",12),command =lambda: writeServo(self))
+		self.upd_S = Button(self.ser_f,state = DISABLED, text ="Update" ,fg="black",bg="cyan",font = ("Georgia",12),command =lambda: writeServo(self))
 		self.upd_S.place(x=175,y=220,width=80,height=25)
 
 		self.back_S = Button(self.ser_f, text ="Back" ,fg="black",bg="#FAA34C",font = ("Georgia",8),command =lambda: self.bringExperiments(root))
@@ -396,7 +418,7 @@ window.bringLogin(root)
 
 otp =""
 try:
-	cli = Socket('192.168.43.180',5002)
+	cli = Socket('192.168.43.180',5000)
 	cli.connectServer()
 except Exception as e:
 	messagebox.showerror(f"Warning", e)
