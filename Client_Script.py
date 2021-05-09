@@ -5,6 +5,7 @@ import pickle
 import bcrypt
 import rsa,os
 import pickle
+from time import sleep
 from tkinter import *
 from tkinter import messagebox
 
@@ -41,6 +42,7 @@ def connect(frame):
 
 def writeServo(frame):
 	val = frame.ang_S.get()
+	frame.slider.set(int(val))
 	cli.sendData("S" + val)
 	return
 
@@ -68,16 +70,20 @@ def authLogin(frame,root):
 
 def closeSer():
 	global cli
+
 	if(messagebox.askyesno(f"Warning", "Want to Exit?")):
 		try:
+			cli.sendData("DisConnectArduino")
+			sleep(1)
 			cli.sendData("Exit")
+			sleep(1)
 			cli.con.close()
 			exit()
 		except:
 			exit()
 
 def onlyDigit(dig):
-	if re.search("[0-9]$",dig) and len(str(dig)) <= 6 and int(dig) <=180 and int(dig) >=0:
+	if re.search("[0-9]$",dig) and len(str(dig)) <= 6:
 		return True
 	elif dig == "":
 		return True
@@ -93,7 +99,7 @@ def validFrame(frame):
 	return True
 
 def onlyDigitAng(dig):
-	if re.search("[0-9]$",dig) and len(str(dig)) <= 3:
+	if re.search("[0-9]$",dig) and len(str(dig)) <= 3 and int(dig) <=180 and int(dig) >=0:
 		return True
 	elif dig == "":
 		return True
@@ -129,6 +135,7 @@ def createAccount(frame):
 			frame.bringLogin(root)
 	else:
 		messagebox.showerror(f"Error", "OTP Not Matched")
+
 
 #--------------------------------------Student------------------------------------------------
 
@@ -310,7 +317,13 @@ class TkFrame:
 		Label(self.exp_f,text= "experiments",fg= "white",bg= "#0A2472",font = ("Engravers MT",16)).place(x=120,y=30,width=200,height=40)
 
 		self.ser_b = Button(self.exp_f, text ="SERVO MOTOR CONTROL",fg="black",bg="#32A6C3",font = ("Georgia",8) ,command = lambda: self.bringServo(root))
-		self.ser_b.place(x=150,y=100,width=150,height=30)
+		self.ser_b.place(x=140,y=100,width=170,height=30)
+
+		self.step_b = Button(self.exp_f, text ="STEPPER MOTOR CONTROL",fg="black",bg="#32A6C3",state= DISABLED,font = ("Georgia",8) ,command = lambda: self.bringServo(root))
+		self.step_b.place(x=140,y=150,width=170,height=30)
+
+		self.step_b = Button(self.exp_f, text ="FEEDBACK AMPLIFIERS",fg="black",bg="#32A6C3",state= DISABLED,font = ("Georgia",8) ,command = lambda: self.bringServo(root))
+		self.step_b.place(x=140,y=200,width=160,height=30)
 
 		self.exit_L = Button(self.exp_f, text ="EXIT",fg="black",bg="#FAA34C",font = ("Georgia",8)  ,command = lambda: closeSer())
 		self.exit_L.place(x=35,y=300,width=100,height=30)
@@ -318,7 +331,8 @@ class TkFrame:
 		self.exp_f.place_forget()
 
 	def servoMotor(self,root):
-		
+		self.var = IntVar()
+		self.updcont = IntVar() 
 		root.geometry("430x350")
 		self.ser_f = Frame(root,width = 430,height=350,bg= "#0A2472")
 		self.ser_f.place(x=0,y=0)
@@ -326,17 +340,24 @@ class TkFrame:
 		Label(self.ser_f,text= "SERVO MOTOR",fg= "white",bg= "#0A2472",font = ("Engravers MT",16)).place(x=115,y=15,width=200,height=40)
 		
 		self.conn_S = Button(self.ser_f, text ="Connect" ,fg="black",bg="cyan",font = ("Georgia",12),command =lambda: connect(self))
-		self.conn_S.place(x=175,y=100,width=80,height=25)
+		self.conn_S.place(x=175,y=90,width=80,height=25)
 
 		self.slider = Scale(self.ser_f,state = DISABLED,from_ = 0, to = 180,highlightbackground = "#0A2472",bg= "#0A2472",fg="white",orient = HORIZONTAL)
-		self.slider.place(x=120,y=150,width = 120)
+		self.slider.place(x=120,y=140,width = 120)
 
-		self.ang_S = Entry(self.ser_f,state = DISABLED,width = 3,background= "#EBEBEB",text= "Angle")
-		self.ang_S.place(x=260,y=170,width=30,height=20)		
+		self.ang_S = Entry(self.ser_f,textvariable = self.var,state = DISABLED,width = 3,background= "#EBEBEB",text= "Angle")
+		self.ang_S.place(x=260,y=160,width=30,height=20)		
 
-		digit = root.register(onlyDigitAng)
+		self.slider.bind("<B1-Motion>",lambda event: self.updateEntry())
 
-		self.ang_S.config(validate = "key",validatecommand = (digit,'%P'))
+		self.ang_S.bind("<Return>",lambda event: self.changeSlider())
+		digite = root.register(onlyDigitAng)
+
+		self.ang_S.config(validate = "key",validatecommand = (digite,'%P'))
+		
+		self.upd_C = Checkbutton(self.ser_f,text= "Update Continously",onvalue = 1, offvalue=0,variable = self.updcont,fg= "cyan",bg= "#0A2472")
+		self.upd_C.place(x=150,y=190)
+		self.updcont.set(0)
 
 		self.upd_S = Button(self.ser_f,state = DISABLED, text ="Update" ,fg="black",bg="cyan",font = ("Georgia",12),command =lambda: writeServo(self))
 		self.upd_S.place(x=175,y=220,width=80,height=25)
@@ -345,6 +366,20 @@ class TkFrame:
 		self.back_S.place(x=50,y=300,width=65,height=27)
 
 		self.ser_f.place_forget()
+	
+	def updateEntry(self):
+		self.ang_S.delete(0,END)
+		self.ang_S.insert(END,self.slider.get())	
+		print( self.updcont.get())
+		if self.updcont.get():
+			writeServo(self)
+			sleep(0.05)
+			
+	def changeSlider(self):
+		try:
+			self.slider.set(int(self.ang_S.get()))
+		except:
+			pass
 
 	def bringExperiments(self,root):
 		self.ser_f.place_forget()

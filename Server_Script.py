@@ -2,11 +2,12 @@
 import socket
 import bcrypt
 import rsa
+from time import sleep
 from pyfirmata import Arduino,util, STRING_DATA
 from SendMail import *
 from tkinter import *
 from random import randint
-import time,threading,json
+import threading,json
 
 #--------------------------------------Tkinter------------------------------------------------
 
@@ -145,6 +146,7 @@ class Socket:
 					Interface.send(f"\n----------Send OTP-------------")
 					sendOTP(self)
 				elif msg == "Exit":
+					Interface.send(f"\n----------EXIT-------------")
 					self.closeCon()
 					break
 				else:
@@ -169,6 +171,11 @@ class Socket:
 
 	def closeCon(self):
 		try:
+			ard.disconnect()
+			Interface.send("\nArduino Closed !!")
+		except:
+			pass
+		try:
 			self.client.close()
 		except:
 			pass
@@ -177,11 +184,7 @@ class Socket:
 			Interface.send("\nSocket Closed !!")
 		except:
 			pass
-		try:
-			ard.disconnect()
-			Interface.send("\nArduino Closed !!")
-		except:
-			pass
+		
 #-------------------------------------TkFrame----------------------------------------------------
 
 class TkFrame:

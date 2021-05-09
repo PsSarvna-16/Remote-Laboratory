@@ -2,3 +2,5 @@
 *.json
 data
 *.json
+cred.json
+*.json
