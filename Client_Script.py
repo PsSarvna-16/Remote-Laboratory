@@ -122,6 +122,7 @@ def getOTP(frame):
 
 def createAccount(frame):
 	global cli,otp
+	cli.sendData("Signup")
 	salt = bcrypt.gensalt()
 	reg = frame.reg_S.get().strip()
 	pwd = bytes(frame.pwd_S.get().strip(),'utf-8')
@@ -328,6 +329,9 @@ class TkFrame:
 		self.exit_L = Button(self.exp_f, text ="EXIT",fg="black",bg="#FAA34C",font = ("Georgia",8)  ,command = lambda: closeSer())
 		self.exit_L.place(x=35,y=300,width=100,height=30)
 
+		self.logout_L = Button(self.exp_f, text ="LOGOUT",fg="black",bg="#FAA34C",font = ("Georgia",8) , command =lambda: self.bringLogin(root))
+		self.logout_L.place(x=275,y=300,width=100,height=30)
+
 		self.exp_f.place_forget()
 
 	def servoMotor(self,root):
@@ -393,6 +397,7 @@ class TkFrame:
 
 	def bringLogin(self,root):
 		self.signUp_f.place_forget()
+		self.exp_f.place_forget()
 		root.geometry("430x350")
 		self.Login_f.place(x=0,y=0)	
 
@@ -453,7 +458,7 @@ window.bringLogin(root)
 
 otp =""
 try:
-	cli = Socket('192.168.43.180',5000)
+	cli = Socket('192.168.43.179',5000)
 	cli.connectServer()
 except Exception as e:
 	messagebox.showerror(f"Warning", e)

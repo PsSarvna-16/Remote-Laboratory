@@ -40,7 +40,7 @@ def loginAuth(ser):
 	ser.sendData("Not")
 
 def sendOTP(ser):
-	global Email
+	global Email,name,mail
 	ser.sendData("Ok")
 	msg = ser.recvData()
 	name,mail = msg.split("%")
@@ -53,6 +53,9 @@ def sendOTP(ser):
 	ser.sendData(str(otp))
 	Interface.send(f"OTP sent Succesfully")
 	Interface.send(f"\n*******************")
+	
+def signupAuth(ser):
+	global name,mail
 	reg = ser.recvData()
 	pwd = ser.recvData()
 	with open("cred.json", 'r') as f:
@@ -65,7 +68,7 @@ def sendOTP(ser):
 	Interface.send(f"\nUser Account Created : {reg}")
 	Interface.send(f"\n****Authentication Sucessfull****")
 	Interface.send(f"-------------------------------")
-
+	
 class Ardino:
 
 	def __init__(self):
@@ -134,14 +137,16 @@ class Socket:
 				elif msg == "DisConnectArduino":
 					Interface.send(f"\n*****Servo DisConnected*****")
 					ard.disconnectArd()
-				elif msg[0] == 'S':
-					Interface.send(f"\nPosition : " + msg[1:])
-					ard.servo(int(msg[1:]))
 				elif msg == "Back":
 					ard.disconnectArd()
 				elif msg == "Login":
 					Interface.send(f"\n---------Login-----------")
 					loginAuth(self)
+				elif msg == "Signup":
+					signupAuth(self)
+				elif msg[0] == 'S':
+					Interface.send(f"\nPosition : " + msg[1:])
+					ard.servo(int(msg[1:]))
 				elif msg == "OTP":
 					Interface.send(f"\n----------Send OTP-------------")
 					sendOTP(self)
@@ -227,6 +232,7 @@ port= 5000
 
 try:
 	ser = Socket(port)
+	startCon()
 except:
 	pass
 

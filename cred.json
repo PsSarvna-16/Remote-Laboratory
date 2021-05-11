@@ -14,7 +14,13 @@
   "18D132": {
     "name": "Saravana",
     "id": "18D132",
-    "pwd": "$2b$12$ykEpS24yUWm6B4jXIBXlLeH4FPgfgyn0OCYKmMlvCVBwXsHEucKcO",
+    "pwd": "$2b$12$vWuliYy9SwkLKfzjqHRB0u5hKkKYMFgD9QM84GHKVx78dDmpH8Rr2",
     "email": "ssaravanakumar@student.tce.edu"
+  },
+  "18D010": {
+    "name": "aravinth",
+    "id": "18D010",
+    "pwd": "$2b$12$aWpTc6pLPn4DWnLuAw6iY.34PV3Ztz7JleLwSlIhK8guGwTiWSqVu",
+    "email": "aravintha@student.tce.edu"
   }
 }
