@@ -1,7 +1,7 @@
 #--------------------------------------Modules------------------------------------------------
 import socket
 import bcrypt
-import rsa
+import rsa, os
 from time import sleep
 from pyfirmata import Arduino,util, STRING_DATA
 from SendMail import *
@@ -236,7 +236,7 @@ try:
 except:
 	pass
 
-Email = Mail("remotelabtce2021@gmail.com","Ecetce2021")
+Email = Mail(os.environ.get('REMOTE_MAIL'),os.environ.get('REMOTE_PASSWORD'))
 
 root.mainloop()
 #------------------------------------------END-------------------------------------------

@@ -1,5 +1,5 @@
 import smtplib
-from random import randint
+from random import randint;
 from email.message import EmailMessage
 
 class Mail:

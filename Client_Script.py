@@ -78,6 +78,7 @@ def closeSer():
 			cli.sendData("Exit")
 			sleep(1)
 			cli.con.close()
+			root.destroy()
 			exit()
 		except:
 			exit()
@@ -316,6 +317,9 @@ class TkFrame:
 		self.exp_f.place(x=0,y=0)
 
 		Label(self.exp_f,text= "experiments",fg= "white",bg= "#0A2472",font = ("Engravers MT",16)).place(x=120,y=30,width=200,height=40)
+		
+		self.user_e = Button(self.exp_f,fg="white",bg="#0A2472",font = ("Georgia",6))
+		self.user_e.place(x=200,y=20)
 
 		self.ser_b = Button(self.exp_f, text ="SERVO MOTOR CONTROL",fg="black",bg="#32A6C3",font = ("Georgia",8) ,command = lambda: self.bringServo(root))
 		self.ser_b.place(x=140,y=100,width=170,height=30)
@@ -323,7 +327,7 @@ class TkFrame:
 		self.step_b = Button(self.exp_f, text ="STEPPER MOTOR CONTROL",fg="black",bg="#32A6C3",state= DISABLED,font = ("Georgia",8) ,command = lambda: self.bringServo(root))
 		self.step_b.place(x=140,y=150,width=170,height=30)
 
-		self.step_b = Button(self.exp_f, text ="FEEDBACK AMPLIFIERS",fg="black",bg="#32A6C3",state= DISABLED,font = ("Georgia",8) ,command = lambda: self.bringServo(root))
+		self.step_b = Button(self.exp_f, text ="FEEDBACK   AMPLIFIERS",fg="black",bg="#32A6C3",state= DISABLED,font = ("Georgia",8) ,command = lambda: self.bringServo(root))
 		self.step_b.place(x=140,y=200,width=160,height=30)
 
 		self.exit_L = Button(self.exp_f, text ="EXIT",fg="black",bg="#FAA34C",font = ("Georgia",8)  ,command = lambda: closeSer())
@@ -455,7 +459,7 @@ window.signUp(root)
 window.experiments(root)
 window.servoMotor(root)
 window.bringLogin(root)
-
+root.protocol('WM_DELETE_WINDOW',closeSer)
 otp =""
 try:
 	cli = Socket('192.168.43.179',5000)
@@ -464,4 +468,5 @@ except Exception as e:
 	messagebox.showerror(f"Warning", e)
 
 root.mainloop()
+
 #--------------------------------------END------------------------------------------------
