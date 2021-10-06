@@ -3,7 +3,7 @@ import socket
 import bcrypt
 import rsa, os
 from time import sleep
-from pyfirmata import Arduino,util, STRING_DATA
+from pyfirmata import Arduino,util,STRING_DATA
 from SendMail import *
 from tkinter import *
 from random import randint
@@ -43,7 +43,7 @@ def sendOTP(ser):
 	global Email,name,mail
 	ser.sendData("Ok")
 	msg = ser.recvData()
-	name,mail = msg.split("%")
+	name,mail = msg.split("%") 
 	Interface.send(f"name : " + name)
 	Interface.send(f"mail : " + mail)
 	otp = randint(100000,999999)
@@ -79,7 +79,7 @@ class Ardino:
 			self.board.exit()
 		except:
 			pass
-		self.board = Arduino('COM3')
+		self.board = Arduino('COM4')
 		self.lcd(" ")
 		self.ser = self.board.get_pin('d:6:s')
 		return
@@ -96,8 +96,8 @@ class Ardino:
 
 	def disconnectArd(self):
 		try:
-			self.ser.write(int(0))
-			self.lcd(str(0))
+			self.ser.write(0)
+			self.lcd('0')
 			self.lcd("S")
 			sleep(2)
 			self.board.exit()
@@ -197,13 +197,13 @@ class TkFrame:
 	def __init__(self,root):
 		Main = Frame(root)
 
-		self.text = Text(Main ,width = 40,height = 25,state = DISABLED,background= "#EBEBEB",xscrollcommand = True)
-		self.text.grid(row=1,columnspan=2)
 		global ser
 		self.start_b = Button(Main,text= "Start", command = lambda: startCon())
 		self.start_b.grid(row=0,column=0)
 		self.terminate_b = Button(Main,text = "Terminate",command = lambda:  ser.closeCon())
 		self.terminate_b.grid(row=0,column=1)
+		self.text = Text(Main ,width = 40,height = 25,state = DISABLED,background= "#88F7FB",xscrollcommand = True)
+		self.text.grid(row=1,columnspan=2)
 
 		Main.grid()
 
@@ -236,7 +236,7 @@ try:
 except:
 	pass
 
-Email = Mail(os.environ.get('REMOTE_MAIL'),os.environ.get('REMOTE_PASSWORD'))
+Email = Mail( os.environ.get('REMOTE_MAIL') , os.environ.get('REMOTE_PASSWORD'))
 
 root.mainloop()
 #------------------------------------------END-------------------------------------------
